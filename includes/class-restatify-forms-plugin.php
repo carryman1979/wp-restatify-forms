@@ -21,7 +21,7 @@ final class Restatify_Forms_Plugin {
     public function __construct( private string $plugin_file ) {
         $this->options    = new Restatify_Forms_Options();
         $this->captcha    = new Restatify_Forms_Captcha();
-        $this->mailer     = new Restatify_Forms_Mailer();
+        $this->mailer     = new Restatify_Forms_Mailer( $this->options );
         $this->submission = new Restatify_Forms_Submission( $this->options, $this->captcha, $this->mailer );
         $this->ui         = new Restatify_Forms_UI( $this->options );
         $this->admin_page = new Restatify_Forms_Admin_Page( $this->options );
@@ -32,6 +32,7 @@ final class Restatify_Forms_Plugin {
     private function register_hooks(): void {
         // Textdomain.
         add_action( 'init', [ $this, 'load_textdomain' ] );
+        add_action( 'init', [ $this->options, 'register_polylang_strings' ], 20 );
 
         // Admin page.
         add_action( 'admin_menu', [ $this, 'register_admin_menu' ] );

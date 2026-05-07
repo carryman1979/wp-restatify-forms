@@ -22,7 +22,7 @@ final class Restatify_Forms_UI {
             return;
         }
 
-        $forms = $this->options->get_all_forms();
+        $forms = array_map( [ $this->options, 'localize_form' ], $this->options->get_all_forms() );
         if ( empty( $forms ) ) {
             return;
         }
@@ -116,7 +116,7 @@ final class Restatify_Forms_UI {
             return;
         }
 
-        $forms = $this->options->get_all_forms();
+        $forms = array_map( [ $this->options, 'localize_form' ], $this->options->get_all_forms() );
         if ( empty( $forms ) ) {
             return;
         }
@@ -146,7 +146,7 @@ final class Restatify_Forms_UI {
 
         $search = strtolower( trim( (string) ( $query['s'] ?? '' ) ) );
 
-        foreach ( $this->options->get_all_forms() as $form ) {
+        foreach ( array_map( [ $this->options, 'localize_form' ], $this->options->get_all_forms() ) as $form ) {
             $trigger = (string) ( $form['trigger'] ?? '' );
             $title   = (string) ( $form['title'] ?? $form['id'] );
 

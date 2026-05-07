@@ -67,7 +67,78 @@ final class Restatify_Forms_Options {
             $all[] = $form;
         }
 
-        return (bool) update_option( Restatify_Forms_Constants::OPTION_KEY, array_values( $all ) );
+        $saved = (bool) update_option( Restatify_Forms_Constants::OPTION_KEY, array_values( $all ) );
+
+        if ( $saved ) {
+            $this->register_form_polylang_strings( $form );
+        }
+
+        return $saved;
+    }
+
+    /**
+     * Registers all translatable form strings in Polylang (if active).
+     */
+    public function register_polylang_strings(): void {
+        if ( ! function_exists( 'pll_register_string' ) ) {
+            return;
+        }
+
+        foreach ( $this->get_all_forms() as $form ) {
+            $this->register_form_polylang_strings( $form );
+        }
+    }
+
+    /**
+     * Returns a Polylang-translated copy of the form (if active).
+     *
+     * @param array<string,mixed> $form
+     * @return array<string,mixed>
+     */
+    public function localize_form( array $form ): array {
+        if ( ! function_exists( 'pll__' ) ) {
+            return $form;
+        }
+
+        $id = (string) ( $form['id'] ?? '' );
+        if ( $id === '' ) {
+            return $form;
+        }
+
+        $form['title']    = $this->pll_translate( (string) ( $form['title'] ?? '' ) );
+        $form['subtitle'] = $this->pll_translate( (string) ( $form['subtitle'] ?? '' ) );
+        $form['text']     = $this->pll_translate( (string) ( $form['text'] ?? '' ) );
+
+        if ( isset( $form['submission'] ) && is_array( $form['submission'] ) ) {
+            $form['submission']['owner_subject'] = $this->pll_translate( (string) ( $form['submission']['owner_subject'] ?? '' ) );
+            $form['submission']['owner_html_body'] = $this->pll_translate( (string) ( $form['submission']['owner_html_body'] ?? '' ) );
+            $form['submission']['confirmation_subject'] = $this->pll_translate( (string) ( $form['submission']['confirmation_subject'] ?? '' ) );
+            $form['submission']['confirmation_html_body'] = $this->pll_translate( (string) ( $form['submission']['confirmation_html_body'] ?? '' ) );
+        }
+
+        if ( isset( $form['fields'] ) && is_array( $form['fields'] ) ) {
+            foreach ( $form['fields'] as $i => $field ) {
+                if ( ! is_array( $field ) ) {
+                    continue;
+                }
+
+                $field_id = (string) ( $field['id'] ?? '' );
+                if ( $field_id === '' ) {
+                    continue;
+                }
+
+                $form['fields'][ $i ]['label'] = $this->pll_translate( (string) ( $field['label'] ?? '' ) );
+                $form['fields'][ $i ]['placeholder'] = $this->pll_translate( (string) ( $field['placeholder'] ?? '' ) );
+
+                if ( isset( $field['options'] ) && is_array( $field['options'] ) ) {
+                    foreach ( $field['options'] as $j => $opt ) {
+                        $form['fields'][ $i ]['options'][ $j ] = $this->pll_translate( (string) $opt );
+                    }
+                }
+            }
+        }
+
+        return $form;
     }
 
     /**
@@ -298,5 +369,67 @@ final class Restatify_Forms_Options {
             . '<hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">'
             . '{fields_table}'
             . '<p style="margin-top:24px;font-size:12px;color:#9ca3af">{site_name}</p>';
+    }
+
+    /**
+     * @param array<string,mixed> $form
+     */
+    private function register_form_polylang_strings( array $form ): void {
+        if ( ! function_exists( 'pll_register_string' ) ) {
+            return;
+        }
+
+        $id = (string) ( $form['id'] ?? '' );
+        if ( $id === '' ) {
+            return;
+        }
+
+        $group = 'Restatify Forms';
+
+        $this->pll_register( "restatify_forms_{$id}_title", (string) ( $form['title'] ?? '' ), $group );
+        $this->pll_register( "restatify_forms_{$id}_subtitle", (string) ( $form['subtitle'] ?? '' ), $group );
+        $this->pll_register( "restatify_forms_{$id}_text", (string) ( $form['text'] ?? '' ), $group, true );
+
+        $submission = is_array( $form['submission'] ?? null ) ? $form['submission'] : [];
+        $this->pll_register( "restatify_forms_{$id}_owner_subject", (string) ( $submission['owner_subject'] ?? '' ), $group );
+        $this->pll_register( "restatify_forms_{$id}_owner_html_body", (string) ( $submission['owner_html_body'] ?? '' ), $group, true );
+        $this->pll_register( "restatify_forms_{$id}_confirmation_subject", (string) ( $submission['confirmation_subject'] ?? '' ), $group );
+        $this->pll_register( "restatify_forms_{$id}_confirmation_html_body", (string) ( $submission['confirmation_html_body'] ?? '' ), $group, true );
+
+        $fields = is_array( $form['fields'] ?? null ) ? $form['fields'] : [];
+        foreach ( $fields as $field ) {
+            if ( ! is_array( $field ) ) {
+                continue;
+            }
+
+            $field_id = (string) ( $field['id'] ?? '' );
+            if ( $field_id === '' ) {
+                continue;
+            }
+
+            $this->pll_register( "restatify_forms_{$id}_field_{$field_id}_label", (string) ( $field['label'] ?? '' ), $group );
+            $this->pll_register( "restatify_forms_{$id}_field_{$field_id}_placeholder", (string) ( $field['placeholder'] ?? '' ), $group );
+
+            $options = is_array( $field['options'] ?? null ) ? $field['options'] : [];
+            foreach ( $options as $j => $opt ) {
+                $this->pll_register( "restatify_forms_{$id}_field_{$field_id}_option_{$j}", (string) $opt, $group );
+            }
+        }
+    }
+
+    private function pll_register( string $name, string $value, string $group, bool $multiline = false ): void {
+        if ( $value === '' || ! function_exists( 'pll_register_string' ) ) {
+            return;
+        }
+
+        pll_register_string( $name, $value, $group, $multiline );
+    }
+
+    private function pll_translate( string $value ): string {
+        if ( $value === '' || ! function_exists( 'pll__' ) ) {
+            return $value;
+        }
+
+        return pll__( $value );
     }
 }

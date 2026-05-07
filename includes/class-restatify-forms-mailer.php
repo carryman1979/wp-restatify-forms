@@ -9,6 +9,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Restatify_Forms_Mailer {
 
+    public function __construct(
+        private ?Restatify_Forms_Options $options = null
+    ) {}
+
     /**
      * Sends owner notification and optional confirmation email.
      *
@@ -16,6 +20,10 @@ final class Restatify_Forms_Mailer {
      * @param array<string,string> $data  Submitted field data [field_id => value].
      */
     public function send( array $form, array $data ): bool {
+        if ( $this->options instanceof Restatify_Forms_Options ) {
+            $form = $this->options->localize_form( $form );
+        }
+
         $submission = $form['submission'] ?? [];
 
         $form_title = wp_specialchars_decode( (string) ( $form['title'] ?? '' ), ENT_QUOTES );
