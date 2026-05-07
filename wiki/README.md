@@ -1,8 +1,13 @@
 # Restatify Forms Wiki
 
+Produktname: Restatify-Forms  
+WordPress-Slug: wp_restatify-forms  
+Website: https://www.restatify.tech
+
 ## Inhalt
 
 - [Schnellstart](./Schnellstart.md)
+- [Migration 2.0.0 (Shared + Branding)](./Migration-2.0.0.md)
 - [Website-KI-Briefing](./Website-KI-Briefing.md)
 - [Release-Checkliste](./Release-Checkliste.md)
 
