@@ -507,6 +507,13 @@ final class Restatify_Forms_Admin_Page {
             wp_send_json_error( [ 'message' => __( 'Ungültige Formulardaten.', Restatify_Forms_Constants::TEXT_DOMAIN ) ], 400 );
         }
 
+        if ( ! $this->validate_form_data( $form_data ) ) {
+            wp_send_json_error(
+                [ 'message' => __( 'Für die Absender-Bestätigung muss mindestens ein E-Mail-Feld als Pflichtfeld vorhanden sein.', Restatify_Forms_Constants::TEXT_DOMAIN ) ],
+                400
+            );
+        }
+
         if ( $this->options->save_form( $form_data ) ) {
             wp_send_json_success( [
                 'message' => __( 'Formular gespeichert.', Restatify_Forms_Constants::TEXT_DOMAIN ),
@@ -592,5 +599,30 @@ final class Restatify_Forms_Admin_Page {
             'validationMode'  => __( 'Validierungsmodus', Restatify_Forms_Constants::TEXT_DOMAIN ),
             'selectOptions'   => __( 'Auswahloptionen', Restatify_Forms_Constants::TEXT_DOMAIN ),
         ];
+    }
+
+    /**
+     * @param array<string,mixed> $form_data
+     */
+    private function validate_form_data( array $form_data ): bool {
+        $submission = is_array( $form_data['submission'] ?? null ) ? $form_data['submission'] : [];
+        $needs_confirmation = ! empty( $submission['confirmation_enabled'] );
+
+        if ( ! $needs_confirmation ) {
+            return true;
+        }
+
+        $fields = is_array( $form_data['fields'] ?? null ) ? $form_data['fields'] : [];
+        foreach ( $fields as $field ) {
+            if ( ! is_array( $field ) ) {
+                continue;
+            }
+
+            if ( ( $field['type'] ?? '' ) === 'email' && ! empty( $field['required'] ) ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -384,26 +384,26 @@
 
     function updateCaptchaConfigVisibility() {
         var provider = state.form.security.captcha_provider || 'none';
-        if (recaptchaConfig) recaptchaConfig.style.display = (provider === 'recaptcha') ? '' : 'none';
-        if (turnstileConfig) turnstileConfig.style.display = (provider === 'turnstile') ? '' : 'none';
+        if (recaptchaConfig) recaptchaConfig.style.display = (provider === 'recaptcha') ? 'block' : 'none';
+        if (turnstileConfig) turnstileConfig.style.display = (provider === 'turnstile') ? 'block' : 'none';
     }
 
     function updateSubmissionModeVisibility() {
         var mode = state.form.submission.mode || 'mail';
-        if (mailConfig)     mailConfig.style.display     = (mode === 'mail')     ? '' : 'none';
-        if (endpointConfig) endpointConfig.style.display = (mode === 'endpoint') ? '' : 'none';
+        if (mailConfig)     mailConfig.style.display     = (mode === 'mail')     ? 'block' : 'none';
+        if (endpointConfig) endpointConfig.style.display = (mode === 'endpoint') ? 'block' : 'none';
     }
 
     function updateConfirmationConfigVisibility() {
         if (confirmationConfig) {
-            confirmationConfig.style.display = (!!state.form.submission.confirmation_enabled) ? '' : 'none';
+            confirmationConfig.style.display = (!!state.form.submission.confirmation_enabled) ? 'block' : 'none';
         }
     }
 
     function updateEndpointAuthVisibility() {
         var auth = state.form.submission.endpoint_auth_type || 'none';
         if (endpointAuthValueRow) {
-            endpointAuthValueRow.style.display = (auth !== 'none') ? '' : 'none';
+            endpointAuthValueRow.style.display = (auth !== 'none') ? 'block' : 'none';
         }
     }
 
@@ -503,7 +503,7 @@
     function buildFieldItem(field, index) {
         var div = document.createElement('div');
         div.className = 'rsfm-field-item';
-        div.setAttribute('draggable', 'true');
+        div.setAttribute('draggable', 'false');
         div.dataset.fieldIndex = index;
 
         // ── Header row
@@ -514,6 +514,7 @@
         var drag = document.createElement('span');
         drag.className = 'rsfm-field-item__drag';
         drag.setAttribute('aria-hidden', 'true');
+        drag.setAttribute('draggable', 'true');
         drag.innerHTML = '&#8942;&#8942;';
         drag.title = 'Feld verschieben (Drag & Drop)';
 
@@ -586,14 +587,16 @@
         var editor = buildFieldEditor(field, index);
         div.appendChild(editor);
 
-        // ── Drag & Drop events
-        div.addEventListener('dragstart', function (e) {
+        // ── Drag & Drop events (handle-only)
+        drag.addEventListener('dragstart', function (e) {
+            e.stopPropagation();
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', String(index));
             setTimeout(function () { div.classList.add('is-dragging'); }, 0);
         });
 
-        div.addEventListener('dragend', function () {
+        drag.addEventListener('dragend', function () {
+            div.setAttribute('draggable', 'false');
             div.classList.remove('is-dragging');
             fieldList.querySelectorAll('.rsfm-field-item').forEach(function (el) {
                 el.classList.remove('drag-over-above', 'drag-over-below');
@@ -909,6 +912,13 @@
             return;
         }
 
+        // Confirmation mail requires at least one required email field.
+        if (state.form.submission.confirmation_enabled && !hasRequiredEmailField()) {
+            alert('Für die Absender-Bestätigung muss mindestens ein E-Mail-Feld als Pflichtfeld markiert sein.');
+            goToStep(1);
+            return;
+        }
+
         hideNotices();
         if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Speichern…'; }
 
@@ -977,6 +987,12 @@
             .replace(/-+/g, '-')
             .replace(/^-|-$/g, '')
             .slice(0, 60);
+    }
+
+    function hasRequiredEmailField() {
+        return (state.form.fields || []).some(function (field) {
+            return field && field.type === 'email' && !!field.required;
+        });
     }
 
     function computeTrigger(id) {
