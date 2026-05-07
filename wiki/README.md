@@ -8,6 +8,7 @@ Website: https://www.restatify.tech
 
 - [Schnellstart](./Schnellstart.md)
 - [Migration 2.0.0 (Shared + Branding)](./Migration-2.0.0.md)
+- [Release 1.0.1](./Release-1.0.1.md)
 - [Website-KI-Briefing](./Website-KI-Briefing.md)
 - [Release-Checkliste](./Release-Checkliste.md)
 
