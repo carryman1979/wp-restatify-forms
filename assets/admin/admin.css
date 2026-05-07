@@ -1,0 +1,608 @@
+/* ==========================================================================
+   Restatify Forms – Admin Page Styles
+   ========================================================================== */
+
+/* ── Wrapper & Header ─────────────────────────────────────────────────── */
+
+.rsfm-wrap {
+    max-width: 1020px;
+    margin-top: 1.5rem;
+}
+
+.rsfm-empty-state {
+    margin-top: 2rem;
+    padding: 3rem 2rem;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.rsfm-empty-state p {
+    font-size: 1.05rem;
+    color: #646970;
+    margin-bottom: 1rem;
+}
+
+/* ── Forms List Table ─────────────────────────────────────────────────── */
+
+.rsfm-forms-table {
+    margin-top: 1rem;
+}
+
+.rsfm-forms-table th {
+    font-weight: 600;
+}
+
+/* ── Notices ──────────────────────────────────────────────────────────── */
+
+.rsfm-notice {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    border-left-width: 4px;
+    border-left-style: solid;
+}
+
+.rsfm-notice p { margin: 0; }
+
+.rsfm-notice--success {
+    background: #f0fdf4;
+    border-left-color: #16a34a;
+    color: #14532d;
+}
+
+.rsfm-notice--error {
+    background: #fef2f2;
+    border-left-color: #dc2626;
+    color: #7f1d1d;
+}
+
+/* ── Stepper ──────────────────────────────────────────────────────────── */
+
+.rsfm-stepper {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 1.5rem 0 0;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.rsfm-stepper__item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1.25rem;
+    background: #fff;
+    border: 0;
+    border-right: 1px solid #c3c4c7;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #646970;
+    transition: background 0.15s, color 0.15s;
+    text-align: left;
+}
+
+.rsfm-stepper__item:last-child {
+    border-right: 0;
+}
+
+.rsfm-stepper__item:hover:not(.is-active) {
+    background: #f6f7f7;
+    color: #3c434a;
+}
+
+.rsfm-stepper__item.is-active {
+    background: #f0f6fc;
+    color: #2271b1;
+    font-weight: 700;
+}
+
+.rsfm-stepper__item.is-done {
+    color: #3c434a;
+}
+
+.rsfm-stepper__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: #dcdcde;
+    color: #3c434a;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.rsfm-stepper__item.is-active .rsfm-stepper__num {
+    background: #2271b1;
+    color: #fff;
+}
+
+.rsfm-stepper__item.is-done .rsfm-stepper__num {
+    background: #00a32a;
+    color: #fff;
+}
+
+.rsfm-stepper__label {
+    white-space: nowrap;
+}
+
+/* ── Step panels ──────────────────────────────────────────────────────── */
+
+.rsfm-step-panels {
+    margin-top: 0;
+}
+
+.rsfm-step-panel[hidden] {
+    display: none !important;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────── */
+
+.rsfm-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 0 0 8px 8px;
+    border-top: 0;
+    padding: 1.75rem 2rem;
+}
+
+.rsfm-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.rsfm-card__title {
+    margin: 0 0 1.25rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1d2327;
+}
+
+.rsfm-card__header .rsfm-card__title {
+    margin-bottom: 0;
+}
+
+/* ── Field rows ───────────────────────────────────────────────────────── */
+
+.rsfm-field-row {
+    margin-bottom: 1.25rem;
+}
+
+.rsfm-field-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    font-size: 0.875rem;
+    color: #1d2327;
+}
+
+.rsfm-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+.rsfm-trigger-display {
+    background: #f6f7f7 !important;
+    font-family: monospace;
+    font-size: 0.95rem;
+    color: #3c434a;
+}
+
+.rsfm-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.rsfm-radio-group label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+/* ── Captcha config blocks ────────────────────────────────────────────── */
+
+.rsfm-captcha-config {
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+}
+
+.rsfm-captcha-config h3 {
+    margin: 0 0 0.75rem;
+    font-size: 0.9rem;
+    color: #1d2327;
+}
+
+#rsfm-recaptcha-config,
+#rsfm-turnstile-config,
+#rsfm-mail-config,
+#rsfm-endpoint-config,
+#rsfm-confirmation-config,
+#rsfm-endpoint-auth-value-row {
+    display: none;
+}
+
+/* ── Template editor ──────────────────────────────────────────────────── */
+
+.rsfm-template-editor {
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.rsfm-template-placeholders {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0.6rem 0.75rem;
+    background: #f6f7f7;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.rsfm-placeholder-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #646970;
+    margin-right: 0.25rem;
+    white-space: nowrap;
+}
+
+.rsfm-placeholder-chip {
+    display: inline-flex;
+    padding: 0.2rem 0.55rem;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-family: monospace;
+    cursor: pointer;
+    color: #2271b1;
+    transition: background 0.1s, color 0.1s;
+}
+
+.rsfm-placeholder-chip:hover {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}
+
+.rsfm-template-editor textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 0;
+    padding: 0.75rem;
+    font-family: monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+    min-height: 220px;
+    display: block;
+}
+
+/* ── Field list (builder) ─────────────────────────────────────────────── */
+
+.rsfm-field-list {
+    min-height: 4rem;
+}
+
+.rsfm-field-list:empty::before {
+    content: attr(data-empty-label);
+    display: block;
+    padding: 2rem;
+    text-align: center;
+    color: #646970;
+    font-size: 0.9rem;
+    border: 2px dashed #c3c4c7;
+    border-radius: 6px;
+}
+
+/* ── Field item ───────────────────────────────────────────────────────── */
+
+.rsfm-field-item {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    transition: box-shadow 0.15s;
+}
+
+.rsfm-field-item.is-dragging {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    opacity: 0.85;
+}
+
+.rsfm-field-item.drag-over-above {
+    border-top: 2px solid #2271b1;
+}
+
+.rsfm-field-item.drag-over-below {
+    border-bottom: 2px solid #2271b1;
+}
+
+.rsfm-field-item__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem;
+    cursor: default;
+}
+
+.rsfm-field-item__drag {
+    cursor: grab;
+    color: #b5b9bc;
+    font-size: 1.1rem;
+    padding: 0 0.25rem;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.rsfm-field-item__drag:active {
+    cursor: grabbing;
+}
+
+.rsfm-field-item__type-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.5rem;
+    background: #f0f6fc;
+    color: #2271b1;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.rsfm-field-item__label {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #1d2327;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rsfm-field-item__required {
+    font-size: 0.72rem;
+    color: #d63638;
+    font-weight: 700;
+}
+
+.rsfm-field-item__actions {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.rsfm-field-item__actions button {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+/* ── Field editor (inline expand) ────────────────────────────────────── */
+
+.rsfm-field-item__editor {
+    border-top: 1px solid #f0f0f1;
+    padding: 1rem 1rem 0.75rem;
+    background: #fcfcfd;
+    border-radius: 0 0 6px 6px;
+}
+
+.rsfm-field-item__editor[hidden] {
+    display: none;
+}
+
+.rsfm-editor-row {
+    margin-bottom: 0.85rem;
+}
+
+.rsfm-editor-row label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.3rem;
+}
+
+.rsfm-editor-row input[type="text"],
+.rsfm-editor-row input[type="email"],
+.rsfm-editor-row input[type="url"],
+.rsfm-editor-row select,
+.rsfm-editor-row textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.rsfm-editor-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    margin-bottom: 0.85rem;
+}
+
+/* ── Select options list ──────────────────────────────────────────────── */
+
+.rsfm-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+}
+
+.rsfm-option-row {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.rsfm-option-row input {
+    flex: 1;
+    box-sizing: border-box;
+}
+
+/* ── Recipients list ──────────────────────────────────────────────────── */
+
+.rsfm-recipients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.rsfm-recipient-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.rsfm-recipient-row input[type="email"] {
+    flex: 1;
+    box-sizing: border-box;
+}
+
+.rsfm-recipient-row select {
+    width: 80px;
+    box-sizing: border-box;
+}
+
+/* ── Editor navigation ────────────────────────────────────────────────── */
+
+.rsfm-editor-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 0 0 8px 8px;
+    border-top: 0;
+}
+
+#rsfm-save-btn {
+    margin-left: auto;
+}
+
+/* ── Field type picker modal ──────────────────────────────────────────── */
+
+.rsfm-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+}
+
+.rsfm-modal[hidden] {
+    display: none !important;
+}
+
+.rsfm-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+}
+
+.rsfm-modal__box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    width: min(520px, 90vw);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.rsfm-modal__title {
+    margin: 0 0 1.25rem;
+    font-size: 1.05rem;
+    padding-right: 2rem;
+}
+
+.rsfm-modal__close {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    background: transparent;
+    border: 0;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #646970;
+    padding: 0.2rem 0.4rem;
+    line-height: 1;
+}
+
+.rsfm-modal__close:hover {
+    color: #1d2327;
+}
+
+.rsfm-field-type-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.rsfm-field-type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 1rem 0.5rem;
+    background: #f6f7f7;
+    border: 2px solid #dcdcde;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.rsfm-field-type-card:hover {
+    background: #f0f6fc;
+    border-color: #2271b1;
+    color: #2271b1;
+}
+
+.rsfm-field-type-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+/* ── Delete button on list ────────────────────────────────────────────── */
+
+.rsfm-delete-btn {
+    color: #d63638 !important;
+    border-color: #d63638 !important;
+}
+
+.rsfm-delete-btn:hover {
+    background: #d63638 !important;
+    color: #fff !important;
+}
