@@ -27,6 +27,10 @@ final class Restatify_Forms_Admin_Page {
             return;
         }
 
+        if ( function_exists( 'wp_enqueue_editor' ) ) {
+            wp_enqueue_editor();
+        }
+
         $base_url  = RESTATIFY_FORMS_PLUGIN_URL . 'assets/admin/';
         $base_path = RESTATIFY_FORMS_PLUGIN_DIR . 'assets/admin/';
 
