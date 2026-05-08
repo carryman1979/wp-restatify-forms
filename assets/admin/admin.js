@@ -85,6 +85,12 @@
     var fieldTypeModal = document.getElementById('rsfm-field-type-modal');
     var fieldTypeCards = document.querySelectorAll('.rsfm-field-type-card');
 
+    // Mail template editors (WYSIWYG)
+    var mailEditorState = {
+        owner_html_body: { initialized: false, bindingAttached: false },
+        confirmation_html_body: { initialized: false, bindingAttached: false },
+    };
+
     // -------------------------------------------------------------------------
     // Init
     // -------------------------------------------------------------------------
@@ -92,9 +98,89 @@
     function init() {
         populateFromState();
         bindStaticEvents();
+        initMailTemplateEditors();
         renderFieldList();
         renderRecipientsList();
         updateStepUI();
+    }
+
+    function canUseWpEditor() {
+        return !!(window.wp && window.wp.editor && typeof window.wp.editor.initialize === 'function');
+    }
+
+    function getTinyMceEditor(editorId) {
+        if (!window.tinymce || typeof window.tinymce.get !== 'function') {
+            return null;
+        }
+        return window.tinymce.get(editorId);
+    }
+
+    function setMailEditorValue(textarea, value) {
+        if (!textarea) { return; }
+        textarea.value = value || '';
+
+        var editor = getTinyMceEditor(textarea.id);
+        if (editor && typeof editor.setContent === 'function') {
+            editor.setContent(value || '');
+        }
+    }
+
+    function initMailEditor(textarea, submissionKey) {
+        if (!(textarea instanceof HTMLTextAreaElement)) { return; }
+        if (!canUseWpEditor()) { return; }
+
+        var slot = mailEditorState[submissionKey];
+        if (!slot || slot.initialized) {
+            return;
+        }
+
+        window.wp.editor.initialize(textarea.id, {
+            tinymce: {
+                wpautop: true,
+                toolbar1: 'formatselect,bold,italic,bullist,numlist,blockquote,link,unlink,undo,redo,removeformat',
+                toolbar2: '',
+            },
+            quicktags: true,
+            mediaButtons: false,
+        });
+
+        slot.initialized = true;
+        bindMailEditorSync(textarea, submissionKey);
+    }
+
+    function bindMailEditorSync(textarea, submissionKey) {
+        var slot = mailEditorState[submissionKey];
+        if (!slot || slot.bindingAttached || !(textarea instanceof HTMLTextAreaElement)) {
+            return;
+        }
+
+        var syncTextarea = function () {
+            state.form.submission[submissionKey] = textarea.value || '';
+            state.dirty = true;
+        };
+
+        textarea.addEventListener('input', syncTextarea);
+
+        var attachEditorBinding = function () {
+            var editor = getTinyMceEditor(textarea.id);
+            if (!editor) {
+                window.requestAnimationFrame(attachEditorBinding);
+                return;
+            }
+
+            editor.on('change keyup SetContent', function () {
+                state.form.submission[submissionKey] = editor.getContent();
+                state.dirty = true;
+            });
+        };
+
+        window.requestAnimationFrame(attachEditorBinding);
+        slot.bindingAttached = true;
+    }
+
+    function initMailTemplateEditors() {
+        initMailEditor(ownerBodyTextarea, 'owner_html_body');
+        initMailEditor(confirmBodyTextarea, 'confirmation_html_body');
     }
 
     // -------------------------------------------------------------------------
@@ -132,11 +218,11 @@
 
         // Mail templates
         if (ownerSubjectInput)   ownerSubjectInput.value   = sub.owner_subject           || '';
-        if (ownerBodyTextarea)   ownerBodyTextarea.value   = sub.owner_html_body          || '';
+        if (ownerBodyTextarea)   setMailEditorValue(ownerBodyTextarea, sub.owner_html_body || '');
         if (ownerHtmlCb)         ownerHtmlCb.checked       = !!sub.owner_html_enabled;
         if (confirmationEnabledCb) confirmationEnabledCb.checked = !!sub.confirmation_enabled;
         if (confirmSubjectInput) confirmSubjectInput.value = sub.confirmation_subject     || '';
-        if (confirmBodyTextarea) confirmBodyTextarea.value = sub.confirmation_html_body   || '';
+        if (confirmBodyTextarea) setMailEditorValue(confirmBodyTextarea, sub.confirmation_html_body || '');
         if (confirmHtmlCb)       confirmHtmlCb.checked     = !!sub.confirmation_html_enabled;
         updateConfirmationConfigVisibility();
 
@@ -261,14 +347,14 @@
 
         // Mail
         if (ownerSubjectInput)     ownerSubjectInput.addEventListener('input',     function () { state.form.submission.owner_subject = ownerSubjectInput.value; });
-        if (ownerBodyTextarea)     ownerBodyTextarea.addEventListener('input',     function () { state.form.submission.owner_html_body = ownerBodyTextarea.value; });
+        if (ownerBodyTextarea)     bindMailEditorSync(ownerBodyTextarea, 'owner_html_body');
         if (ownerHtmlCb)           ownerHtmlCb.addEventListener('change',          function () { state.form.submission.owner_html_enabled = ownerHtmlCb.checked; });
         if (confirmationEnabledCb) confirmationEnabledCb.addEventListener('change',function () {
             state.form.submission.confirmation_enabled = confirmationEnabledCb.checked;
             updateConfirmationConfigVisibility();
         });
         if (confirmSubjectInput)   confirmSubjectInput.addEventListener('input',   function () { state.form.submission.confirmation_subject = confirmSubjectInput.value; });
-        if (confirmBodyTextarea)   confirmBodyTextarea.addEventListener('input',   function () { state.form.submission.confirmation_html_body = confirmBodyTextarea.value; });
+        if (confirmBodyTextarea)   bindMailEditorSync(confirmBodyTextarea, 'confirmation_html_body');
         if (confirmHtmlCb)         confirmHtmlCb.addEventListener('change',        function () { state.form.submission.confirmation_html_enabled = confirmHtmlCb.checked; });
 
         // Recipients
@@ -303,6 +389,14 @@
                 var ph         = chip.dataset.placeholder;
                 var targetEl   = document.getElementById(targetId);
                 if (!targetEl) { return; }
+
+                var editor = getTinyMceEditor(targetId);
+                if (editor && !editor.isHidden()) {
+                    editor.focus();
+                    editor.insertContent(ph);
+                    return;
+                }
+
                 var start = targetEl.selectionStart;
                 var end   = targetEl.selectionEnd;
                 var val   = targetEl.value;
