@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Restatify Forms
  * Description: Multi-form popup builder with configurable fields, email templates and custom endpoint forwarding.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Restatify
  * License: GPL-2.0-or-later
  * Requires at least: 6.9
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'RESTATIFY_FORMS_PLUGIN_FILE', __FILE__ );
 define( 'RESTATIFY_FORMS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RESTATIFY_FORMS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'RESTATIFY_FORMS_VERSION', '1.0.1' );
+define( 'RESTATIFY_FORMS_VERSION', '1.0.2' );
 
 require_once RESTATIFY_FORMS_PLUGIN_DIR . 'includes/class-restatify-forms-constants.php';
 require_once RESTATIFY_FORMS_PLUGIN_DIR . 'includes/class-restatify-forms-options.php';

@@ -669,8 +669,8 @@
         });
         addRow(strings.label || 'Label', labelInp);
 
-        // Placeholder (not for checkbox/radio/hidden)
-        if (!['checkbox', 'radio', 'hidden'].includes(field.type)) {
+        // Placeholder (not for checkbox/radio/select/hidden)
+        if (!['checkbox', 'radio', 'select', 'hidden'].includes(field.type)) {
             var phInp = makeInput(field.placeholder, 'z.B. Ihr Name');
             phInp.addEventListener('input', function () {
                 state.form.fields[index].placeholder = phInp.value;
