@@ -112,8 +112,10 @@ final class Restatify_Forms_Options {
         if ( isset( $form['submission'] ) && is_array( $form['submission'] ) ) {
             $form['submission']['owner_subject'] = $this->pll_translate( (string) ( $form['submission']['owner_subject'] ?? '' ) );
             $form['submission']['owner_html_body'] = $this->pll_translate( (string) ( $form['submission']['owner_html_body'] ?? '' ) );
+            $form['submission']['owner_text_body'] = $this->pll_translate( (string) ( $form['submission']['owner_text_body'] ?? '' ) );
             $form['submission']['confirmation_subject'] = $this->pll_translate( (string) ( $form['submission']['confirmation_subject'] ?? '' ) );
             $form['submission']['confirmation_html_body'] = $this->pll_translate( (string) ( $form['submission']['confirmation_html_body'] ?? '' ) );
+            $form['submission']['confirmation_text_body'] = $this->pll_translate( (string) ( $form['submission']['confirmation_text_body'] ?? '' ) );
         }
 
         if ( isset( $form['fields'] ) && is_array( $form['fields'] ) ) {
@@ -183,10 +185,12 @@ final class Restatify_Forms_Options {
                 ],
                 'owner_subject'               => 'Neue Formular-Einsendung: {form_title}',
                 'owner_html_body'             => $this->get_default_owner_template(),
+                'owner_text_body'             => $this->get_default_owner_text_template(),
                 'owner_html_enabled'          => true,
                 'confirmation_enabled'        => false,
                 'confirmation_subject'        => 'Ihre Anfrage bei {site_name}',
                 'confirmation_html_body'      => $this->get_default_confirmation_template(),
+                'confirmation_text_body'      => $this->get_default_confirmation_text_template(),
                 'confirmation_html_enabled'   => true,
             ],
         ];
@@ -274,10 +278,12 @@ final class Restatify_Forms_Options {
         $form['submission']['endpoint_auth_value']       = sanitize_text_field( (string) $form['submission']['endpoint_auth_value'] );
         $form['submission']['owner_subject']             = sanitize_text_field( (string) $form['submission']['owner_subject'] );
         $form['submission']['owner_html_body']           = wp_kses_post( (string) $form['submission']['owner_html_body'] );
+        $form['submission']['owner_text_body']           = sanitize_textarea_field( (string) ( $form['submission']['owner_text_body'] ?? '' ) );
         $form['submission']['owner_html_enabled']        = (bool) $form['submission']['owner_html_enabled'];
         $form['submission']['confirmation_enabled']      = (bool) $form['submission']['confirmation_enabled'];
         $form['submission']['confirmation_subject']      = sanitize_text_field( (string) $form['submission']['confirmation_subject'] );
         $form['submission']['confirmation_html_body']    = wp_kses_post( (string) $form['submission']['confirmation_html_body'] );
+        $form['submission']['confirmation_text_body']    = sanitize_textarea_field( (string) ( $form['submission']['confirmation_text_body'] ?? '' ) );
         $form['submission']['confirmation_html_enabled'] = (bool) $form['submission']['confirmation_html_enabled'];
 
         // Recipients
@@ -356,19 +362,81 @@ final class Restatify_Forms_Options {
     }
 
     private function get_default_owner_template(): string {
-        return '<h2 style="margin:0 0 12px">Neue Formular-Einsendung</h2>'
-            . '<p><strong>Formular:</strong> {form_title}<br><strong>Datum:</strong> {date}</p>'
-            . '<hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">'
+        $title = wp_specialchars_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES );
+
+        return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif;color:#0f172a">'
+            . '<tr><td align="center" style="padding:24px 12px">'
+            . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:680px;border-collapse:collapse;background:#ffffff;border:1px solid rgba(11,18,33,0.08);border-radius:20px;overflow:hidden;box-shadow:0 16px 40px rgba(11,18,33,0.08)">'
+            . '<tr><td style="padding:24px 28px;background:linear-gradient(135deg,#ff6a3d 0%,#0f766e 100%);color:#ffffff">'
+            . '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;opacity:.95">Formular-Benachrichtigung</div>'
+            . '<h1 style="margin:8px 0 0;font-size:24px;line-height:1.2;color:#ffffff">Neue Anfrage eingegangen</h1>'
+            . '</td></tr>'
+            . '<tr><td style="padding:28px">'
+            . '<p style="margin:0 0 14px;font-size:16px;line-height:1.6"><strong>Formular:</strong> {form_title}<br><strong>Datum:</strong> {date}</p>'
             . '{fields_table}'
-            . '<p style="margin-top:24px;font-size:12px;color:#9ca3af">Gesendet via {site_name}</p>';
+            . '<p style="margin:22px 0 0;font-size:14px;line-height:1.65">Bitte prüfe die Angaben vor einer manuellen Weiterverarbeitung.</p>'
+            . '</td></tr>'
+            . '<tr><td style="padding:0 28px 26px">'
+            . '<div style="height:1px;background:linear-gradient(90deg,#ff6a3d 0%,#0f766e 100%);"></div>'
+            . '</td></tr>'
+            . '<tr><td style="padding:0 28px 28px;font-size:12px;line-height:1.6;color:#667085">'
+            . '<p style="margin:0 0 8px"><strong>Disclaimer:</strong> Diese Nachricht enthält organisatorische Informationen. Bitte sende keine sensiblen Daten per E-Mail.</p>'
+            . '<p style="margin:0 0 8px">Diese E-Mail wurde maschinell erstellt. Antworten auf diese Nachricht werden möglicherweise nicht gelesen.</p>'
+            . '<p style="margin:0 0 8px">Schütze die Umwelt, indem du diese E-Mail nicht ausdruckst.</p>'
+            . '<p style="margin:0">Service-Team · ' . esc_html( $title ) . '</p>'
+            . '</td></tr>'
+            . '</table>'
+            . '</td></tr>'
+            . '</table>';
     }
 
     private function get_default_confirmation_template(): string {
-        return '<h2 style="margin:0 0 12px">Vielen Dank!</h2>'
-            . '<p>Wir haben Ihre Anfrage erhalten und melden uns so schnell wie möglich bei Ihnen.</p>'
-            . '<hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">'
+        return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif;color:#0f172a">'
+            . '<tr><td align="center" style="padding:24px 12px">'
+            . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:680px;border-collapse:collapse;background:#ffffff;border:1px solid rgba(11,18,33,0.08);border-radius:20px;overflow:hidden;box-shadow:0 16px 40px rgba(11,18,33,0.08)">'
+            . '<tr><td style="padding:24px 28px;background:linear-gradient(135deg,#ff6a3d 0%,#0f766e 100%);color:#ffffff">'
+            . '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;opacity:.95">Eingangsbestätigung</div>'
+            . '<h1 style="margin:8px 0 0;font-size:24px;line-height:1.2;color:#ffffff">Vielen Dank für deine Anfrage</h1>'
+            . '</td></tr>'
+            . '<tr><td style="padding:28px">'
+            . '<p style="margin:0 0 14px;font-size:16px;line-height:1.65">Wir haben deine Nachricht erhalten und melden uns zeitnah bei dir.</p>'
+            . '<p style="margin:0 0 18px;font-size:14px;line-height:1.65"><strong>Formular:</strong> {form_title}<br><strong>Eingang:</strong> {date}</p>'
             . '{fields_table}'
-            . '<p style="margin-top:24px;font-size:12px;color:#9ca3af">{site_name}</p>';
+            . '</td></tr>'
+            . '<tr><td style="padding:0 28px 26px">'
+            . '<div style="height:1px;background:linear-gradient(90deg,#ff6a3d 0%,#0f766e 100%);"></div>'
+            . '</td></tr>'
+            . '<tr><td style="padding:0 28px 28px;font-size:12px;line-height:1.6;color:#667085">'
+            . '<p style="margin:0 0 8px"><strong>Disclaimer:</strong> Diese Nachricht enthält organisatorische Informationen zu deiner Anfrage. Bitte sende keine sensiblen Daten per E-Mail.</p>'
+            . '<p style="margin:0 0 8px">Diese E-Mail wurde maschinell erstellt. Antworten auf diese Nachricht werden möglicherweise nicht gelesen.</p>'
+            . '<p style="margin:0 0 8px">Schütze die Umwelt, indem du diese E-Mail nicht ausdruckst.</p>'
+            . '<p style="margin:0">Service-Team · {site_name}</p>'
+            . '</td></tr>'
+            . '</table>'
+            . '</td></tr>'
+            . '</table>';
+    }
+
+    private function get_default_owner_text_template(): string {
+        return "Neue Anfrage eingegangen\n"
+            . "Formular: {form_title}\n"
+            . "Datum: {date}\n\n"
+            . "{fields_text}\n\n"
+            . "Bitte prüfe die Angaben vor einer manuellen Weiterverarbeitung.\n\n"
+            . "Disclaimer: Diese Nachricht enthält organisatorische Informationen. Bitte sende keine sensiblen Daten per E-Mail.\n"
+            . "Diese E-Mail wurde maschinell erstellt. Antworten auf diese Nachricht werden möglicherweise nicht gelesen.\n"
+            . "Schütze die Umwelt, indem du diese E-Mail nicht ausdruckst.";
+    }
+
+    private function get_default_confirmation_text_template(): string {
+        return "Vielen Dank für deine Anfrage\n\n"
+            . "Wir haben deine Nachricht erhalten und melden uns zeitnah bei dir.\n\n"
+            . "Formular: {form_title}\n"
+            . "Eingang: {date}\n\n"
+            . "{fields_text}\n\n"
+            . "Disclaimer: Diese Nachricht enthält organisatorische Informationen zu deiner Anfrage. Bitte sende keine sensiblen Daten per E-Mail.\n"
+            . "Diese E-Mail wurde maschinell erstellt. Antworten auf diese Nachricht werden möglicherweise nicht gelesen.\n"
+            . "Schütze die Umwelt, indem du diese E-Mail nicht ausdruckst.";
     }
 
     /**
@@ -393,8 +461,10 @@ final class Restatify_Forms_Options {
         $submission = is_array( $form['submission'] ?? null ) ? $form['submission'] : [];
         $this->pll_register( "restatify_forms_{$id}_owner_subject", (string) ( $submission['owner_subject'] ?? '' ), $group );
         $this->pll_register( "restatify_forms_{$id}_owner_html_body", (string) ( $submission['owner_html_body'] ?? '' ), $group, true );
+        $this->pll_register( "restatify_forms_{$id}_owner_text_body", (string) ( $submission['owner_text_body'] ?? '' ), $group, true );
         $this->pll_register( "restatify_forms_{$id}_confirmation_subject", (string) ( $submission['confirmation_subject'] ?? '' ), $group );
         $this->pll_register( "restatify_forms_{$id}_confirmation_html_body", (string) ( $submission['confirmation_html_body'] ?? '' ), $group, true );
+        $this->pll_register( "restatify_forms_{$id}_confirmation_text_body", (string) ( $submission['confirmation_text_body'] ?? '' ), $group, true );
 
         $fields = is_array( $form['fields'] ?? null ) ? $form['fields'] : [];
         foreach ( $fields as $field ) {
@@ -418,6 +488,11 @@ final class Restatify_Forms_Options {
     }
 
     private function pll_register( string $name, string $value, string $group, bool $multiline = false ): void {
+        if ( class_exists( '\\Restatify\\Shared\\I18n\\PolylangAdapter', false ) ) {
+            \Restatify\Shared\I18n\PolylangAdapter::register( $name, $value, $group, $multiline );
+            return;
+        }
+
         if ( $value === '' || ! function_exists( 'pll_register_string' ) ) {
             return;
         }
@@ -426,6 +501,10 @@ final class Restatify_Forms_Options {
     }
 
     private function pll_translate( string $value ): string {
+        if ( class_exists( '\\Restatify\\Shared\\I18n\\PolylangAdapter', false ) ) {
+            return \Restatify\Shared\I18n\PolylangAdapter::translate( $value );
+        }
+
         if ( $value === '' || ! function_exists( 'pll__' ) ) {
             return $value;
         }

@@ -61,7 +61,29 @@ if (Test-Path $zipPath) {
     Remove-Item $zipPath -Force
 }
 
-Compress-Archive -Path (Join-Path $tempRoot 'wp-restatify-forms') -DestinationPath $zipPath -CompressionLevel Optimal
+Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+$stagingRoot = Join-Path $tempRoot 'wp-restatify-forms'
+$files = Get-ChildItem -Path $stagingRoot -Recurse -File
+
+$zipArchive = [System.IO.Compression.ZipFile]::Open($zipPath, [System.IO.Compression.ZipArchiveMode]::Create)
+try {
+    foreach ($file in $files) {
+        $relativePath = $file.FullName.Substring($stagingRoot.Length).TrimStart([char[]]'\\/')
+        $entryPath = ('wp-restatify-forms/' + $relativePath).Replace('\', '/')
+        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+            $zipArchive,
+            $file.FullName,
+            $entryPath,
+            [System.IO.Compression.CompressionLevel]::Optimal
+        ) | Out-Null
+    }
+}
+finally {
+    $zipArchive.Dispose()
+}
+
 Remove-Item $tempRoot -Recurse -Force
 
 Write-Output "Created release package: $zipPath"

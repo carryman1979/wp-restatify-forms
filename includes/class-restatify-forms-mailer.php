@@ -33,8 +33,15 @@ final class Restatify_Forms_Mailer {
         $fields_html = $this->build_fields_table_html( $form, $data );
         $fields_text = $this->build_fields_text( $form, $data );
 
-        $search  = [ '{form_title}', '{site_name}', '{date}', '{fields_table}', '{fields_text}' ];
-        $replace = [ $form_title, $site_name, $date, $fields_html, $fields_text ];
+        $replacements = [
+            'form_title'   => $form_title,
+            'site_name'    => $site_name,
+            'date'         => $date,
+            'fields_table' => $fields_html,
+            'fields_text'  => $fields_text,
+        ];
+
+        $all_sent = true;
 
         // Owner notification.
         $recipients = $submission['recipients'] ?? [];
@@ -43,22 +50,24 @@ final class Restatify_Forms_Mailer {
         $bcc = array_column( array_filter( $recipients, fn( $r ) => ( $r['type'] ?? '' ) === 'bcc' ), 'email' );
 
         if ( ! empty( $to ) ) {
-            $subject = str_replace( $search, $replace, (string) ( $submission['owner_subject'] ?? '' ) );
-            $body    = str_replace( $search, $replace, (string) ( $submission['owner_html_body'] ?? '' ) );
-            $this->dispatch( $to, $subject, $body, ! empty( $submission['owner_html_enabled'] ), $cc, $bcc );
+            $subject = $this->render_template( (string) ( $submission['owner_subject'] ?? '' ), $replacements );
+            $html_body = $this->render_template( (string) ( $submission['owner_html_body'] ?? '' ), $replacements );
+            $text_body = $this->render_template( (string) ( $submission['owner_text_body'] ?? '{fields_text}' ), $replacements );
+            $all_sent = $this->dispatch( $to, $subject, $html_body, $text_body, ! empty( $submission['owner_html_enabled'] ), $cc, $bcc ) && $all_sent;
         }
 
         // Submitter confirmation.
         if ( ! empty( $submission['confirmation_enabled'] ) ) {
             $submitter = $this->find_submitter_email( $form, $data );
             if ( $submitter !== '' ) {
-                $subject = str_replace( $search, $replace, (string) ( $submission['confirmation_subject'] ?? '' ) );
-                $body    = str_replace( $search, $replace, (string) ( $submission['confirmation_html_body'] ?? '' ) );
-                $this->dispatch( [ $submitter ], $subject, $body, ! empty( $submission['confirmation_html_enabled'] ) );
+                $subject = $this->render_template( (string) ( $submission['confirmation_subject'] ?? '' ), $replacements );
+                $html_body = $this->render_template( (string) ( $submission['confirmation_html_body'] ?? '' ), $replacements );
+                $text_body = $this->render_template( (string) ( $submission['confirmation_text_body'] ?? '{fields_text}' ), $replacements );
+                $all_sent = $this->dispatch( [ $submitter ], $subject, $html_body, $text_body, ! empty( $submission['confirmation_html_enabled'] ) ) && $all_sent;
             }
         }
 
-        return true;
+        return $all_sent;
     }
 
     // -------------------------------------------------------------------------
@@ -70,15 +79,12 @@ final class Restatify_Forms_Mailer {
      * @param string[] $cc
      * @param string[] $bcc
      */
-    private function dispatch( array $to, string $subject, string $body, bool $html, array $cc = [], array $bcc = [] ): void {
+    private function dispatch( array $to, string $subject, string $html_body, string $text_body, bool $html, array $cc = [], array $bcc = [] ): bool {
         if ( empty( $to ) ) {
-            return;
+            return false;
         }
 
         $headers = [];
-        if ( $html ) {
-            $headers[] = 'Content-Type: text/html; charset=UTF-8';
-        }
         foreach ( $cc as $addr ) {
             $headers[] = 'Cc: ' . sanitize_email( $addr );
         }
@@ -86,12 +92,79 @@ final class Restatify_Forms_Mailer {
             $headers[] = 'Bcc: ' . sanitize_email( $addr );
         }
 
-        wp_mail(
+        $text_body = trim( $text_body );
+        if ( $text_body === '' ) {
+            $text_body = wp_strip_all_tags( $html_body );
+        }
+
+        if ( ! $html || trim( $html_body ) === '' ) {
+            if ( class_exists( '\\Restatify\\Shared\\Mail\\MailDispatcher', false ) ) {
+                return \Restatify\Shared\Mail\MailDispatcher::send(
+                    array_map( 'sanitize_email', $to ),
+                    wp_strip_all_tags( $subject ),
+                    '',
+                    $text_body,
+                    false,
+                    $headers
+                );
+            } else {
+                    $headers[] = 'Content-Type: text/plain; charset=UTF-8';
+                return (bool) wp_mail(
+                    array_map( 'sanitize_email', $to ),
+                    wp_strip_all_tags( $subject ),
+                    $text_body,
+                    $headers
+                );
+            }
+        }
+
+        if ( class_exists( '\\Restatify\\Shared\\Mail\\MailDispatcher', false ) ) {
+            return \Restatify\Shared\Mail\MailDispatcher::send(
+                array_map( 'sanitize_email', $to ),
+                wp_strip_all_tags( $subject ),
+                $html_body,
+                $text_body,
+                true,
+                $headers
+            );
+        }
+
+        $callback = static function ( $phpmailer ) use ( $html_body, $text_body ): void {
+            $phpmailer->isHTML( true );
+            $phpmailer->Body = $html_body;
+            $phpmailer->AltBody = $text_body;
+        };
+
+        add_action( 'phpmailer_init', $callback );
+
+        $sent = wp_mail(
             array_map( 'sanitize_email', $to ),
             wp_strip_all_tags( $subject ),
-            $html ? $body : wp_strip_all_tags( $body ),
+            $html_body,
             $headers
         );
+
+        remove_action( 'phpmailer_init', $callback );
+
+        return (bool) $sent;
+    }
+
+    /**
+     * @param array<string,string> $replacements
+     */
+    private function render_template( string $template, array $replacements ): string {
+        if ( class_exists( '\\Restatify\\Shared\\Util\\TokenReplacer', false ) ) {
+            return \Restatify\Shared\Util\TokenReplacer::replace( $template, $replacements );
+        }
+
+        $search = [];
+        $replace = [];
+        foreach ( $replacements as $token => $value ) {
+            $search[] = '{' . $token . '}';
+            $replace[] = (string) $value;
+        }
+
+        return str_replace( $search, $replace, $template );
     }
 
     /**

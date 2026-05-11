@@ -3,6 +3,7 @@
 Product: Restatify-Forms  
 Slug: wp_restatify-forms  
 Company: https://www.restatify.tech
+Version: 1.0.4
 
 A standalone WordPress plugin that provides a multi-form popup builder with a multi-step admin wizard, configurable field types, email/tel validation, CAPTCHA options, and flexible submission modes (wp_mail or custom endpoint).
 
@@ -98,6 +99,16 @@ Output: `release/wp-restatify-forms-{version}.zip`
 ## Third-party notices
 
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+---
+
+## Changelog
+
+### 1.0.4
+
+- Added JS and PHP unit test baseline for trigger/link handling and picker compatibility.
+- Added shared-guideline references for AGENTS and Copilot instructions.
+- Updated release documentation and wiki links for current maintenance release.
 
 ---
 

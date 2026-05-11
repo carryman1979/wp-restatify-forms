@@ -342,6 +342,50 @@
     cursor: pointer;
 }
 
+/* Floating captcha provider attribution (shown only while protected fields are focused) */
+.rsfm-provider-attribution {
+    position: fixed;
+    left: 0.9rem;
+    bottom: 1rem;
+    z-index: 100000;
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    max-width: min(92vw, 560px);
+}
+
+.rsfm-provider-attribution[hidden] {
+    display: none !important;
+}
+
+.rsfm-provider-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.42rem 0.72rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    border: 1px solid color-mix(in srgb, var(--rsfm-text, #0f172a) 15%, transparent);
+    background: color-mix(in srgb, var(--rsfm-surface, #ffffff) 92%, var(--rsfm-text, #0f172a) 8%);
+    color: var(--rsfm-text, #0f172a);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(6px);
+}
+
+.rsfm-provider-btn:hover {
+    text-decoration: none;
+    color: var(--rsfm-text, #0f172a);
+    border-color: var(--rsfm-accent, #ff6b00);
+}
+
+.rsfm-provider-btn:focus-visible {
+    outline: 2px solid var(--rsfm-accent, #ff6b00);
+    outline-offset: 2px;
+}
+
 /* Honeypot – must remain visually hidden but accessible */
 .rsfm-field--honeypot {
     position: absolute !important;
@@ -391,5 +435,16 @@
 
     .rsfm-btn {
         width: 100%;
+    }
+
+    .rsfm-provider-attribution {
+        left: 0.6rem;
+        right: 0.6rem;
+        bottom: 0.7rem;
+    }
+
+    .rsfm-provider-btn {
+        flex: 1 1 auto;
+        justify-content: center;
     }
 }

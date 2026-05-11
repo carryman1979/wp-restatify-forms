@@ -33,6 +33,18 @@ final class Restatify_Forms_Admin_Page {
 
         $base_url  = RESTATIFY_FORMS_PLUGIN_URL . 'assets/admin/';
         $base_path = RESTATIFY_FORMS_PLUGIN_DIR . 'assets/admin/';
+        $shared_js_path = ABSPATH . 'wp_restatify-shared/src/js/mail-template-editor.js';
+        $shared_js_url  = home_url( '/wp_restatify-shared/src/js/mail-template-editor.js' );
+
+        wp_enqueue_script(
+            'restatify-shared-mail-template-editor',
+            $shared_js_url,
+            [],
+            file_exists( $shared_js_path )
+                ? (string) filemtime( $shared_js_path )
+                : RESTATIFY_FORMS_VERSION,
+            true
+        );
 
         wp_enqueue_style(
             'wp-restatify-forms-admin',
@@ -46,7 +58,7 @@ final class Restatify_Forms_Admin_Page {
         wp_enqueue_script(
             'wp-restatify-forms-admin',
             $base_url . 'admin.js',
-            [ 'jquery' ],
+            [ 'jquery', 'restatify-shared-mail-template-editor' ],
             file_exists( $base_path . 'admin.js' )
                 ? (string) filemtime( $base_path . 'admin.js' )
                 : RESTATIFY_FORMS_VERSION,
@@ -352,13 +364,38 @@ final class Restatify_Forms_Admin_Page {
                             </div>
                             <div class="rsfm-field-row">
                                 <div class="rsfm-template-editor">
-                                    <div class="rsfm-template-placeholders">
-                                        <span class="rsfm-placeholder-label"><?php esc_html_e( 'Platzhalter:', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></span>
-                                        <?php foreach ( [ '{form_title}', '{site_name}', '{date}', '{fields_table}', '{fields_text}' ] as $ph ) : ?>
-                                            <button type="button" class="rsfm-placeholder-chip" data-placeholder="<?php echo esc_attr( $ph ); ?>" data-target="rsfm-owner-body"><?php echo esc_html( $ph ); ?></button>
-                                        <?php endforeach; ?>
+                                    <div class="rsfm-template-tabs" data-rsfm-template-tabs>
+                                        <button type="button" class="button button-secondary is-active" data-rsfm-tab="owner" data-rsfm-panel="html"><?php esc_html_e( 'HTML', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
+                                        <button type="button" class="button button-secondary" data-rsfm-tab="owner" data-rsfm-panel="code"><?php esc_html_e( 'Code', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
+                                        <button type="button" class="button button-secondary" data-rsfm-tab="owner" data-rsfm-panel="text"><?php esc_html_e( 'Text', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
                                     </div>
-                                    <textarea id="rsfm-owner-body" class="large-text code" rows="10" data-bind-submission="owner_html_body"></textarea>
+                                    <div class="rsfm-template-panel is-active" data-rsfm-tab-panel="owner" data-rsfm-panel="html">
+                                        <div class="rsfm-template-placeholders">
+                                            <span class="rsfm-placeholder-label"><?php esc_html_e( 'Platzhalter:', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></span>
+                                            <?php foreach ( class_exists( '\\Restatify\\Shared\\Mail\\PlaceholderCatalog', false ) ? \Restatify\Shared\Mail\PlaceholderCatalog::formsMail( true ) : [ '{form_title}', '{site_name}', '{date}', '{fields_table}', '{fields_text}' ] as $ph ) : ?>
+                                                <button type="button" class="rsfm-placeholder-chip" data-placeholder="<?php echo esc_attr( $ph ); ?>" data-target="rsfm-owner-body"><?php echo esc_html( $ph ); ?></button>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <textarea id="rsfm-owner-body" class="large-text code" rows="10" data-bind-submission="owner_html_body"></textarea>
+                                    </div>
+                                    <div class="rsfm-template-panel" data-rsfm-tab-panel="owner" data-rsfm-panel="code" hidden>
+                                        <div class="rsfm-template-placeholders">
+                                            <span class="rsfm-placeholder-label"><?php esc_html_e( 'Platzhalter:', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></span>
+                                            <?php foreach ( class_exists( '\\Restatify\\Shared\\Mail\\PlaceholderCatalog', false ) ? \Restatify\Shared\Mail\PlaceholderCatalog::formsMail( true ) : [ '{form_title}', '{site_name}', '{date}', '{fields_table}', '{fields_text}' ] as $ph ) : ?>
+                                                <button type="button" class="rsfm-placeholder-chip" data-placeholder="<?php echo esc_attr( $ph ); ?>" data-target="rsfm-owner-body-code"><?php echo esc_html( $ph ); ?></button>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <textarea id="rsfm-owner-body-code" class="large-text code" rows="10" data-rs-mail-html-code-for="rsfm-owner-body"></textarea>
+                                    </div>
+                                    <div class="rsfm-template-panel" data-rsfm-tab-panel="owner" data-rsfm-panel="text" hidden>
+                                        <div class="rsfm-template-placeholders">
+                                            <span class="rsfm-placeholder-label"><?php esc_html_e( 'Platzhalter:', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></span>
+                                            <?php foreach ( class_exists( '\\Restatify\\Shared\\Mail\\PlaceholderCatalog', false ) ? \Restatify\Shared\Mail\PlaceholderCatalog::formsMail( false ) : [ '{form_title}', '{site_name}', '{date}', '{fields_text}' ] as $ph ) : ?>
+                                                <button type="button" class="rsfm-placeholder-chip" data-placeholder="<?php echo esc_attr( $ph ); ?>" data-target="rsfm-owner-text-body"><?php echo esc_html( $ph ); ?></button>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <textarea id="rsfm-owner-text-body" class="large-text code" rows="10" data-bind-submission="owner_text_body"></textarea>
+                                    </div>
                                 </div>
                                 <label class="rsfm-toggle-label" style="margin-top:.5rem">
                                     <input type="checkbox" id="rsfm-owner-html-enabled" data-bind-submission="owner_html_enabled">
@@ -381,13 +418,38 @@ final class Restatify_Forms_Admin_Page {
                                 </div>
                                 <div class="rsfm-field-row">
                                     <div class="rsfm-template-editor">
-                                        <div class="rsfm-template-placeholders">
-                                            <span class="rsfm-placeholder-label"><?php esc_html_e( 'Platzhalter:', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></span>
-                                            <?php foreach ( [ '{form_title}', '{site_name}', '{date}', '{fields_table}', '{fields_text}' ] as $ph ) : ?>
-                                                <button type="button" class="rsfm-placeholder-chip" data-placeholder="<?php echo esc_attr( $ph ); ?>" data-target="rsfm-confirmation-body"><?php echo esc_html( $ph ); ?></button>
-                                            <?php endforeach; ?>
+                                        <div class="rsfm-template-tabs" data-rsfm-template-tabs>
+                                            <button type="button" class="button button-secondary is-active" data-rsfm-tab="confirmation" data-rsfm-panel="html"><?php esc_html_e( 'HTML', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
+                                            <button type="button" class="button button-secondary" data-rsfm-tab="confirmation" data-rsfm-panel="code"><?php esc_html_e( 'Code', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
+                                            <button type="button" class="button button-secondary" data-rsfm-tab="confirmation" data-rsfm-panel="text"><?php esc_html_e( 'Text', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
                                         </div>
-                                        <textarea id="rsfm-confirmation-body" class="large-text code" rows="10" data-bind-submission="confirmation_html_body"></textarea>
+                                        <div class="rsfm-template-panel is-active" data-rsfm-tab-panel="confirmation" data-rsfm-panel="html">
+                                            <div class="rsfm-template-placeholders">
+                                                <span class="rsfm-placeholder-label"><?php esc_html_e( 'Platzhalter:', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></span>
+                                                <?php foreach ( class_exists( '\\Restatify\\Shared\\Mail\\PlaceholderCatalog', false ) ? \Restatify\Shared\Mail\PlaceholderCatalog::formsMail( true ) : [ '{form_title}', '{site_name}', '{date}', '{fields_table}', '{fields_text}' ] as $ph ) : ?>
+                                                    <button type="button" class="rsfm-placeholder-chip" data-placeholder="<?php echo esc_attr( $ph ); ?>" data-target="rsfm-confirmation-body"><?php echo esc_html( $ph ); ?></button>
+                                                <?php endforeach; ?>
+                                            </div>
+                                            <textarea id="rsfm-confirmation-body" class="large-text code" rows="10" data-bind-submission="confirmation_html_body"></textarea>
+                                        </div>
+                                        <div class="rsfm-template-panel" data-rsfm-tab-panel="confirmation" data-rsfm-panel="code" hidden>
+                                            <div class="rsfm-template-placeholders">
+                                                <span class="rsfm-placeholder-label"><?php esc_html_e( 'Platzhalter:', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></span>
+                                                <?php foreach ( class_exists( '\\Restatify\\Shared\\Mail\\PlaceholderCatalog', false ) ? \Restatify\Shared\Mail\PlaceholderCatalog::formsMail( true ) : [ '{form_title}', '{site_name}', '{date}', '{fields_table}', '{fields_text}' ] as $ph ) : ?>
+                                                    <button type="button" class="rsfm-placeholder-chip" data-placeholder="<?php echo esc_attr( $ph ); ?>" data-target="rsfm-confirmation-body-code"><?php echo esc_html( $ph ); ?></button>
+                                                <?php endforeach; ?>
+                                            </div>
+                                            <textarea id="rsfm-confirmation-body-code" class="large-text code" rows="10" data-rs-mail-html-code-for="rsfm-confirmation-body"></textarea>
+                                        </div>
+                                        <div class="rsfm-template-panel" data-rsfm-tab-panel="confirmation" data-rsfm-panel="text" hidden>
+                                            <div class="rsfm-template-placeholders">
+                                                <span class="rsfm-placeholder-label"><?php esc_html_e( 'Platzhalter:', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></span>
+                                                <?php foreach ( class_exists( '\\Restatify\\Shared\\Mail\\PlaceholderCatalog', false ) ? \Restatify\Shared\Mail\PlaceholderCatalog::formsMail( false ) : [ '{form_title}', '{site_name}', '{date}', '{fields_text}' ] as $ph ) : ?>
+                                                    <button type="button" class="rsfm-placeholder-chip" data-placeholder="<?php echo esc_attr( $ph ); ?>" data-target="rsfm-confirmation-text-body"><?php echo esc_html( $ph ); ?></button>
+                                                <?php endforeach; ?>
+                                            </div>
+                                            <textarea id="rsfm-confirmation-text-body" class="large-text code" rows="10" data-bind-submission="confirmation_text_body"></textarea>
+                                        </div>
                                     </div>
                                     <label class="rsfm-toggle-label" style="margin-top:.5rem">
                                         <input type="checkbox" id="rsfm-confirmation-html-enabled" data-bind-submission="confirmation_html_enabled">

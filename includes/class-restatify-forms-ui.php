@@ -149,8 +149,9 @@ final class Restatify_Forms_UI {
         foreach ( array_map( [ $this->options, 'localize_form' ], $this->options->get_all_forms() ) as $form ) {
             $trigger = (string) ( $form['trigger'] ?? '' );
             $title   = (string) ( $form['title'] ?? $form['id'] );
+            $picker_url = $this->normalize_trigger_for_picker( $trigger );
 
-            if ( $trigger === '' ) {
+            if ( $trigger === '' || $picker_url === '' ) {
                 continue;
             }
 
@@ -163,18 +164,35 @@ final class Restatify_Forms_UI {
             }
 
             $results[] = [
-                'ID'        => 0,
+                'ID'        => absint( crc32( $trigger ) ),
                 'title'     => sprintf(
                     /* translators: %s: form title */
                     __( 'Formular-Popup: %s (Restatify)', Restatify_Forms_Constants::TEXT_DOMAIN ),
                     $title
                 ),
-                'permalink' => $trigger,
+                // Some Gutenberg link controls prefer `url`, while classic link UI uses `permalink`.
+                'url'       => $picker_url,
+                'permalink' => $picker_url,
                 'info'      => __( 'Öffnet das Restatify Formular-Overlay beim Klick.', Restatify_Forms_Constants::TEXT_DOMAIN ),
             ];
         }
 
         return $results;
+    }
+
+    private function normalize_trigger_for_picker( string $trigger ): string {
+        $trigger = trim( $trigger );
+        if ( $trigger === '' ) {
+            return '';
+        }
+
+        // Gutenberg button/link controls frequently collapse fragment-only values to "#".
+        // Returning an absolute URL keeps the hash stable when saved.
+        if ( str_starts_with( $trigger, '#restatify-form-' ) ) {
+            return home_url( '/' ) . $trigger;
+        }
+
+        return $trigger;
     }
 
     // -------------------------------------------------------------------------
