@@ -251,6 +251,24 @@
     overflow: hidden;
 }
 
+.rsfm-template-tabs {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.6rem 0.75rem;
+    background: #f6f7f7;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.rsfm-template-tabs .button.is-active {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+}
+
+.rsfm-template-panel[hidden] {
+    display: none !important;
+}
+
 .rsfm-template-placeholders {
     display: flex;
     flex-wrap: wrap;

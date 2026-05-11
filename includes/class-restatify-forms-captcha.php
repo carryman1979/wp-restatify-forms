@@ -16,9 +16,28 @@ final class Restatify_Forms_Captcha {
      */
     public function verify( array $security, string $token ): bool {
         $provider = $security['captcha_provider'] ?? 'none';
+        $provider = is_string( $provider ) ? $provider : 'none';
 
         if ( $provider === 'none' ) {
             return true;
+        }
+
+        // Keep forms submit-capable when a provider was selected but keys are missing.
+        // In that case, the CAPTCHA is effectively disabled instead of hard-failing every request.
+        if ( $provider === 'recaptcha' ) {
+            $site_key = (string) ( $security['recaptcha_site_key'] ?? '' );
+            $secret   = (string) ( $security['recaptcha_secret_key'] ?? '' );
+            if ( $site_key === '' || $secret === '' ) {
+                return true;
+            }
+        }
+
+        if ( $provider === 'turnstile' ) {
+            $site_key = (string) ( $security['turnstile_site_key'] ?? '' );
+            $secret   = (string) ( $security['turnstile_secret_key'] ?? '' );
+            if ( $site_key === '' || $secret === '' ) {
+                return true;
+            }
         }
 
         if ( $token === '' ) {

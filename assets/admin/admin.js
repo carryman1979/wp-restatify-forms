@@ -67,11 +67,15 @@
     // Step 4 – Mail templates
     var ownerSubjectInput      = document.getElementById('rsfm-owner-subject');
     var ownerBodyTextarea      = document.getElementById('rsfm-owner-body');
+    var ownerBodyCodeTextarea  = document.getElementById('rsfm-owner-body-code');
+    var ownerTextBodyTextarea  = document.getElementById('rsfm-owner-text-body');
     var ownerHtmlCb            = document.getElementById('rsfm-owner-html-enabled');
     var confirmationEnabledCb  = document.getElementById('rsfm-confirmation-enabled');
     var confirmationConfig     = document.getElementById('rsfm-confirmation-config');
     var confirmSubjectInput    = document.getElementById('rsfm-confirmation-subject');
     var confirmBodyTextarea    = document.getElementById('rsfm-confirmation-body');
+    var confirmBodyCodeTextarea= document.getElementById('rsfm-confirmation-body-code');
+    var confirmTextBodyTextarea= document.getElementById('rsfm-confirmation-text-body');
     var confirmHtmlCb          = document.getElementById('rsfm-confirmation-html-enabled');
 
     // Step 4 – Endpoint
@@ -99,9 +103,58 @@
         populateFromState();
         bindStaticEvents();
         initMailTemplateEditors();
+        initSharedMailEditorHelpers();
         renderFieldList();
         renderRecipientsList();
         updateStepUI();
+    }
+
+    function initSharedMailEditorHelpers() {
+        var shared = window.RestatifySharedMailEditor;
+        if (!shared) {
+            return;
+        }
+
+        if (typeof shared.initTabSystem === 'function') {
+            shared.initTabSystem({
+                tabSelector: '[data-rsfm-tab]',
+                panelSelector: '[data-rsfm-tab-panel]',
+                tabGroupAttr: 'data-rsfm-tab',
+                panelGroupAttr: 'data-rsfm-tab-panel',
+                panelAttr: 'data-rsfm-panel',
+                activeClass: 'is-active',
+                onSwitch: function (group, panel) {
+                    if (panel === 'code') {
+                        if (group === 'owner' && typeof shared.syncCodeFromEditor === 'function') {
+                            shared.syncCodeFromEditor('rsfm-owner-body', '[data-rs-mail-html-code-for]', 'data-rs-mail-html-code-for');
+                        }
+                        if (group === 'confirmation' && typeof shared.syncCodeFromEditor === 'function') {
+                            shared.syncCodeFromEditor('rsfm-confirmation-body', '[data-rs-mail-html-code-for]', 'data-rs-mail-html-code-for');
+                        }
+                    }
+                }
+            });
+        }
+
+        if (typeof shared.bindHtmlCodeSync === 'function') {
+            shared.bindHtmlCodeSync({
+                codeSelector: '[data-rs-mail-html-code-for]',
+                codeForAttr: 'data-rs-mail-html-code-for'
+            });
+        }
+
+        if (typeof shared.initPlaceholderButtons === 'function') {
+            shared.initPlaceholderButtons({
+                buttonSelector: '.rsfm-placeholder-chip',
+                placeholderAttr: 'data-placeholder',
+                targetAttr: 'data-target',
+                onAfterEditorInsert: function (editorId) {
+                    if (typeof shared.syncCodeFromEditor === 'function') {
+                        shared.syncCodeFromEditor(editorId, '[data-rs-mail-html-code-for]', 'data-rs-mail-html-code-for');
+                    }
+                }
+            });
+        }
     }
 
     function canUseWpEditor() {
@@ -123,6 +176,24 @@
         if (editor && typeof editor.setContent === 'function') {
             editor.setContent(value || '');
         }
+    }
+
+    function setHtmlTemplateValue(htmlTextarea, codeTextarea, value) {
+        setMailEditorValue(htmlTextarea, value || '');
+        if (codeTextarea) {
+            codeTextarea.value = value || '';
+        }
+    }
+
+    function syncHtmlTemplateState(submissionKey, htmlTextarea, codeTextarea, value) {
+        state.form.submission[submissionKey] = value || '';
+        if (htmlTextarea && htmlTextarea.value !== (value || '')) {
+            htmlTextarea.value = value || '';
+        }
+        if (codeTextarea && codeTextarea.value !== (value || '')) {
+            codeTextarea.value = value || '';
+        }
+        state.dirty = true;
     }
 
     function initMailEditor(textarea, submissionKey) {
@@ -154,8 +225,19 @@
             return;
         }
 
+        var codeMirrorTextarea = null;
+        if (submissionKey === 'owner_html_body') {
+            codeMirrorTextarea = ownerBodyCodeTextarea;
+        }
+        if (submissionKey === 'confirmation_html_body') {
+            codeMirrorTextarea = confirmBodyCodeTextarea;
+        }
+
         var syncTextarea = function () {
             state.form.submission[submissionKey] = textarea.value || '';
+            if (codeMirrorTextarea) {
+                codeMirrorTextarea.value = textarea.value || '';
+            }
             state.dirty = true;
         };
 
@@ -170,6 +252,9 @@
 
             editor.on('change keyup SetContent', function () {
                 state.form.submission[submissionKey] = editor.getContent();
+                if (codeMirrorTextarea) {
+                    codeMirrorTextarea.value = editor.getContent();
+                }
                 state.dirty = true;
             });
         };
@@ -218,11 +303,13 @@
 
         // Mail templates
         if (ownerSubjectInput)   ownerSubjectInput.value   = sub.owner_subject           || '';
-        if (ownerBodyTextarea)   setMailEditorValue(ownerBodyTextarea, sub.owner_html_body || '');
+        if (ownerBodyTextarea)   setHtmlTemplateValue(ownerBodyTextarea, ownerBodyCodeTextarea, sub.owner_html_body || '');
+        if (ownerTextBodyTextarea) ownerTextBodyTextarea.value = sub.owner_text_body || '';
         if (ownerHtmlCb)         ownerHtmlCb.checked       = !!sub.owner_html_enabled;
         if (confirmationEnabledCb) confirmationEnabledCb.checked = !!sub.confirmation_enabled;
         if (confirmSubjectInput) confirmSubjectInput.value = sub.confirmation_subject     || '';
-        if (confirmBodyTextarea) setMailEditorValue(confirmBodyTextarea, sub.confirmation_html_body || '');
+        if (confirmBodyTextarea) setHtmlTemplateValue(confirmBodyTextarea, confirmBodyCodeTextarea, sub.confirmation_html_body || '');
+        if (confirmTextBodyTextarea) confirmTextBodyTextarea.value = sub.confirmation_text_body || '';
         if (confirmHtmlCb)       confirmHtmlCb.checked     = !!sub.confirmation_html_enabled;
         updateConfirmationConfigVisibility();
 
@@ -348,6 +435,13 @@
         // Mail
         if (ownerSubjectInput)     ownerSubjectInput.addEventListener('input',     function () { state.form.submission.owner_subject = ownerSubjectInput.value; });
         if (ownerBodyTextarea)     bindMailEditorSync(ownerBodyTextarea, 'owner_html_body');
+        if (ownerBodyCodeTextarea) ownerBodyCodeTextarea.addEventListener('input', function () {
+            syncHtmlTemplateState('owner_html_body', ownerBodyTextarea, ownerBodyCodeTextarea, ownerBodyCodeTextarea.value);
+        });
+        if (ownerTextBodyTextarea) ownerTextBodyTextarea.addEventListener('input', function () {
+            state.form.submission.owner_text_body = ownerTextBodyTextarea.value;
+            state.dirty = true;
+        });
         if (ownerHtmlCb)           ownerHtmlCb.addEventListener('change',          function () { state.form.submission.owner_html_enabled = ownerHtmlCb.checked; });
         if (confirmationEnabledCb) confirmationEnabledCb.addEventListener('change',function () {
             state.form.submission.confirmation_enabled = confirmationEnabledCb.checked;
@@ -355,6 +449,13 @@
         });
         if (confirmSubjectInput)   confirmSubjectInput.addEventListener('input',   function () { state.form.submission.confirmation_subject = confirmSubjectInput.value; });
         if (confirmBodyTextarea)   bindMailEditorSync(confirmBodyTextarea, 'confirmation_html_body');
+        if (confirmBodyCodeTextarea) confirmBodyCodeTextarea.addEventListener('input', function () {
+            syncHtmlTemplateState('confirmation_html_body', confirmBodyTextarea, confirmBodyCodeTextarea, confirmBodyCodeTextarea.value);
+        });
+        if (confirmTextBodyTextarea) confirmTextBodyTextarea.addEventListener('input', function () {
+            state.form.submission.confirmation_text_body = confirmTextBodyTextarea.value;
+            state.dirty = true;
+        });
         if (confirmHtmlCb)         confirmHtmlCb.addEventListener('change',        function () { state.form.submission.confirmation_html_enabled = confirmHtmlCb.checked; });
 
         // Recipients
@@ -380,32 +481,6 @@
         });
         if (endpointAuthValueInput) endpointAuthValueInput.addEventListener('input', function () {
             state.form.submission.endpoint_auth_value = endpointAuthValueInput.value;
-        });
-
-        // Placeholder chips
-        document.querySelectorAll('.rsfm-placeholder-chip').forEach(function (chip) {
-            chip.addEventListener('click', function () {
-                var targetId   = chip.dataset.target;
-                var ph         = chip.dataset.placeholder;
-                var targetEl   = document.getElementById(targetId);
-                if (!targetEl) { return; }
-
-                var editor = getTinyMceEditor(targetId);
-                if (editor && !editor.isHidden()) {
-                    editor.focus();
-                    editor.insertContent(ph);
-                    return;
-                }
-
-                var start = targetEl.selectionStart;
-                var end   = targetEl.selectionEnd;
-                var val   = targetEl.value;
-                targetEl.value = val.slice(0, start) + ph + val.slice(end);
-                targetEl.setSelectionRange(start + ph.length, start + ph.length);
-                targetEl.focus();
-                // Trigger input event so state syncs
-                targetEl.dispatchEvent(new Event('input'));
-            });
         });
 
         // Delete buttons on list page

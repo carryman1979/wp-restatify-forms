@@ -7,6 +7,7 @@
     var strings  = cfg.strings || {};
     var ajaxUrl  = cfg.ajaxUrl || '';
     var nonce    = cfg.nonce   || '';
+    var attributionEl = null;
 
     // Map form ID → config for quick lookup
     var formMap = {};
@@ -20,8 +21,144 @@
     // -------------------------------------------------------------------------
 
     function init() {
+        ensureAttributionUi();
         document.addEventListener('click', handleLinkClick);
         document.addEventListener('keydown', handleEsc);
+        document.addEventListener('focusin', handleFieldFocusState, true);
+        document.addEventListener('focusout', handleFieldFocusState, true);
+        window.addEventListener('hashchange', handleLocationHash);
+
+        // Support direct navigation to a form hash.
+        handleLocationHash();
+    }
+
+    function handleLocationHash() {
+        var formId = parseTriggerToFormId(window.location.hash || '');
+        if (formId) {
+            openPopup(formId);
+        }
+    }
+
+    function parseTriggerToFormId(triggerValue) {
+        var triggerPrefix = 'restatify-form-';
+        var raw = (triggerValue || '').trim();
+        if (raw === '') { return ''; }
+
+        var hash = raw;
+        var hashIndex = raw.indexOf('#');
+        if (hashIndex >= 0) {
+            hash = raw.slice(hashIndex);
+        }
+
+        if (!hash.startsWith('#restatify-form-')) {
+            return '';
+        }
+
+        var rawId = hash.slice(1); // strip '#'
+        return rawId.startsWith(triggerPrefix) ? rawId.slice(triggerPrefix.length) : rawId;
+    }
+
+    function ensureAttributionUi() {
+        attributionEl = document.querySelector('.rsfm-provider-attribution');
+        if (attributionEl) { return; }
+
+        attributionEl = document.createElement('div');
+        attributionEl.className = 'rsfm-provider-attribution';
+        attributionEl.hidden = true;
+        attributionEl.innerHTML = [
+            '<a class="rsfm-provider-btn rsfm-provider-btn--privacy" href="#" target="_blank" rel="noopener noreferrer nofollow">Datenschutz</a>',
+            '<a class="rsfm-provider-btn rsfm-provider-btn--terms" href="#" target="_blank" rel="noopener noreferrer nofollow">Bedingungen</a>'
+        ].join('');
+
+        document.body.appendChild(attributionEl);
+    }
+
+    function getProviderLinks(provider) {
+        if (provider === 'recaptcha') {
+            return {
+                privacy: 'https://policies.google.com/privacy',
+                terms: 'https://policies.google.com/terms',
+                label: 'Google reCAPTCHA'
+            };
+        }
+
+        if (provider === 'turnstile') {
+            return {
+                privacy: 'https://www.cloudflare.com/privacypolicy/',
+                terms: 'https://www.cloudflare.com/website-terms/',
+                label: 'Cloudflare Turnstile'
+            };
+        }
+
+        return null;
+    }
+
+    function isProtectionActive(security) {
+        if (!security || typeof security !== 'object') { return false; }
+
+        var provider = security.captcha_provider || 'none';
+        return provider !== 'none';
+    }
+
+    function setAttributionForPopup(popup) {
+        if (!popup || !attributionEl) { return; }
+
+        var formId   = popup.dataset.formId || '';
+        var formCfg  = formMap[formId] || {};
+        var security = formCfg.security || {};
+        if (!isProtectionActive(security)) {
+            hideAttribution();
+            return;
+        }
+
+        var provider = security.captcha_provider || 'none';
+        var links = getProviderLinks(provider);
+        if (!links) {
+            hideAttribution();
+            return;
+        }
+
+        var privacyLink = attributionEl.querySelector('.rsfm-provider-btn--privacy');
+        var termsLink   = attributionEl.querySelector('.rsfm-provider-btn--terms');
+        if (!privacyLink || !termsLink) {
+            hideAttribution();
+            return;
+        }
+
+        privacyLink.href = links.privacy;
+        termsLink.href = links.terms;
+        privacyLink.textContent = links.label + ' Datenschutz';
+        termsLink.textContent = links.label + ' Bedingungen';
+        attributionEl.hidden = false;
+    }
+
+    function hideAttribution() {
+        if (!attributionEl) { return; }
+        attributionEl.hidden = true;
+    }
+
+    function handleFieldFocusState() {
+        window.setTimeout(function () {
+            var active = document.activeElement;
+            if (!active || !active.closest) {
+                hideAttribution();
+                return;
+            }
+
+            var popup = active.closest('.rsfm-popup:not([hidden])');
+            if (!popup) {
+                hideAttribution();
+                return;
+            }
+
+            var isFormField = active.matches('input:not([type="hidden"]), textarea, select');
+            if (!isFormField) {
+                hideAttribution();
+                return;
+            }
+
+            setAttributionForPopup(popup);
+        }, 0);
     }
 
     // -------------------------------------------------------------------------
@@ -35,9 +172,10 @@
         while (target && target !== document) {
             if (target.tagName === 'A') {
                 var href = (target.getAttribute('href') || '').trim();
-                if (href.startsWith('#restatify-form-')) {
-                    var formId = href.slice(1); // strip '#'
-                    if (formMap[formId]) {
+                var formId = parseTriggerToFormId(href);
+                if (formId) {
+
+                    if (formMap[formId] || document.getElementById('rsfm-popup-' + formId)) {
                         e.preventDefault();
                         openPopup(formId);
                     }
@@ -84,6 +222,7 @@
         if (!popup) { return; }
         popup.hidden = true;
         document.body.style.overflow = '';
+        hideAttribution();
     }
 
     function handleEsc(e) {
@@ -445,6 +584,15 @@
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
+    }
+
+    // Test hooks for unit tests (no effect on production behavior).
+    if (typeof window !== 'undefined') {
+        window.__RSFM_FORMS_TEST__ = {
+            parseTriggerToFormId: parseTriggerToFormId,
+            isProtectionActive: isProtectionActive,
+            getProviderLinks: getProviderLinks
+        };
     }
 
 }());
